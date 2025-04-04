@@ -1,6 +1,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { addNote, getAllNotes, findNotes, removeNote, removeAllNotes } from './notes.js';
+import { start } from './server.js';
 
 const listNotes = (notes) => {
   notes.forEach(note => {
@@ -89,8 +90,9 @@ yargs(hideBin(process.argv))
           describe: 'Port to bind on'
         })
     },
-    (argv) => {
-      console.log('Port to bind on is: ', argv.port);
+    async (argv) => {
+      const notes = await getAllNotes();
+      start(notes, argv.port);
     }
   )
   .demandCommand(1)
