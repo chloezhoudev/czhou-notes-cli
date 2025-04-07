@@ -1,5 +1,5 @@
 {
-  "name": "note-cli",
+  "name": "czhou-notes-cli",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
