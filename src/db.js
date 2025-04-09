@@ -12,7 +12,7 @@ const ensureDB = async () => {
   try {
     // Check if db.json exists
     await access(DB_PATH);
-  } catch (error) {
+  } catch (_error) {
     // Create db.json if it doesn't exist
     await writeFile(DB_PATH, JSON.stringify({ notes: [] }));
   }

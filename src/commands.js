@@ -35,7 +35,7 @@ yargs(hideBin(process.argv))
     'all',
     'Get all notes',
     () => {},
-    async (argv) => {
+    async (_argv) => {
       const notes = await getAllNotes();
       listNotes(notes);
     }
@@ -74,7 +74,7 @@ yargs(hideBin(process.argv))
     'clean',
     'Remove all notes',
     () => {},
-    async (argv) => {
+    async (_argv) => {
       const done = await removeAllNotes();
       console.log(done ? 'All notes removed' : 'Please try again later'); 
     }
