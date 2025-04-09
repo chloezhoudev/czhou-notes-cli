@@ -2,6 +2,9 @@
 
 A command-line tool for taking and managing notes with tags.
 
+## Requirements
+- Node.js >= 18.0.0
+
 ## Installation
 ```bash
 npm install -g czhou-notes-cli
