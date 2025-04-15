@@ -1,7 +1,12 @@
 {
   "name": "czhou-notes-cli",
   "version": "1.0.0",
+  "description": "A command-line tool for taking and managing notes with tags",
   "main": "index.js",
+  "bin": {
+    "note": "./index.js"
+  },
+  "type": "module",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
@@ -9,14 +14,13 @@
     "lint:fix": "eslint src --fix",
     "prepare": "husky"
   },
-  "bin": {
-    "note": "./index.js"
+  "keywords": ["cli", "notes", "tags", "command-line"],
+  "author": "Chloe Zhou",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chloezhoudev/czhou-notes-cli.git"
   },
-  "type": "module",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "open": "^10.1.0",
     "yargs": "^17.7.2"
