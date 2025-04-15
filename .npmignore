@@ -1,0 +1,21 @@
+# Test files
+tests/
+coverage/
+*.test.js
+jest.config.js
+
+# Development configs
+.github/
+.husky/
+eslint.config.js
+
+# Documentation
+CODE_OF_CONDUCT.md
+CHANGELOG.md
+
+# Git files
+.git/
+.gitignore
+
+# Other
+node_modules/
