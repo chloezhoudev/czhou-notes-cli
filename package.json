@@ -1,6 +1,6 @@
 {
   "name": "czhou-notes-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A command-line tool for taking and managing notes with tags",
   "main": "index.js",
   "bin": {
@@ -14,7 +14,12 @@
     "lint:fix": "eslint src --fix",
     "prepare": "husky"
   },
-  "keywords": ["cli", "notes", "tags", "command-line"],
+  "keywords": [
+    "cli",
+    "notes",
+    "tags",
+    "command-line"
+  ],
   "author": "Chloe Zhou",
   "license": "MIT",
   "repository": {
