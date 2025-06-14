@@ -19,7 +19,7 @@ export const saveUserSession = async (user) => {
       loginTime: new Date().toISOString()
     }
 
-    await writeFile(USER_SESSION_PATH, JSON.stringify(USER_SESSION_PATH, null, 2), 'utf-8');
+    await writeFile(USER_SESSION_PATH, JSON.stringify(sessionData, null, 2), 'utf-8');
     return sessionData;
   } catch (error) {
     throw new Error(`Could not save user session: ${error.message}`);
