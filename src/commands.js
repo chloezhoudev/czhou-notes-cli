@@ -51,7 +51,6 @@ const isSessionValid = async (session) => {
 
 // Helper function to handle user login/creation with Supabase
 const handleUserSetup = async (username) => {
-  try {
     // STEP 1: Validate and normalize username
     const normalizedUsername = validateUsername(username);
 
@@ -105,11 +104,6 @@ const handleUserSetup = async (username) => {
     // Save new session
     const session = await saveUserSession(user);
     return session;
-
-  } catch (error) {
-    console.error('Setup failed:', error.message);
-    process.exit(1);
-  }
 };
 
 yargs(hideBin(process.argv))
@@ -123,7 +117,12 @@ yargs(hideBin(process.argv))
           type: 'string'
         })
     }, async (argv) => {
-      await handleUserSetup(argv.username);
+      try {
+        await handleUserSetup(argv.username);
+      } catch (error) {
+        console.error('Setup failed:', error.message);
+        process.exit(1);
+      }
     })
   .command(
     'whoami',
