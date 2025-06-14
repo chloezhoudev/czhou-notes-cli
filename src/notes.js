@@ -1,38 +1,68 @@
-import { getDB, saveDB, insertDB } from "./db.js";
+import { requireUserSession } from './users.js';
+import {
+  createNote,
+  getAllNotesForUser,
+  findNotesByContent,
+  removeNoteById,
+  removeAllNotesForUser
+} from "./supabase-db.js";
 
 export const addNote = async (note, tags) => {
-  const newNote = {
-    content: note,
-    tags
+  const session = await requireUserSession();
+
+  const { data: savedNote, error } = await createNote(session.id, note, tags);
+
+  if (error) {
+    throw new Error(`Failed to add note: ${error.message}`);
   }
-  const savedNote = await insertDB('notes', newNote);
+
   return savedNote;
 }
 
 export const getAllNotes = async () => {
-  const db = await getDB();
-  return db.notes;
+  const session = await requireUserSession();
+
+  const { data: notes, error } = await getAllNotesForUser(session.id);
+
+  if (error) {
+    throw new Error(`Failed to get notes: ${error.message}`);
+  }
+
+  return notes || [];
+
 }
 
 export const findNotes = async (filter) => {
-  const notes = await getAllNotes();
-  return notes.filter(note => note.content.toLowerCase().includes(filter.toLowerCase()));
+  const session = await requireUserSession();
+
+  const { data: notes, error } = await findNotesByContent(session.id, filter);
+
+  if (error) {
+    throw new Error(`Failed to find notes: ${error.message}`);
+  }
+
+  return notes || [];
 }
 
 export const removeNote = async (id) => {
-  const notes = await getAllNotes();
-  const match = notes.find(note => note.id === id);
+  const session = await requireUserSession();
 
-  if (!match) {
-    return;
+  const { data: removedNote, error } = await removeNoteById(id, session.id);
+
+  if (error) {
+    throw new Error(`Failed to remove note: ${error.message}`);
   }
 
-  const newNotes = notes.filter(note => note.id !== id);
-  await saveDB({ notes: newNotes });
-  return id;
+  return removedNote ? removedNote.id : null;
 }
 
 export const removeAllNotes = async () => {
-  await saveDB({ notes: [] });
+  const session = await requireUserSession();
+  const { error } = await removeAllNotesForUser(session.id);
+
+  if (error) {
+    throw new Error(`Failed to remove all notes: ${error.message}`);
+  }
+
   return true;
 }
