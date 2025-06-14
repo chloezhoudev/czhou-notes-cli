@@ -27,6 +27,8 @@
     "url": "git+https://github.com/chloezhoudev/czhou-notes-cli.git"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
+    "dotenv": "^16.5.0",
     "open": "^10.1.0",
     "yargs": "^17.7.2"
   },
