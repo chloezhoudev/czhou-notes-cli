@@ -1,7 +1,7 @@
 {
   "name": "czhou-notes-cli",
   "version": "1.0.3",
-  "description": "A command-line tool for taking and managing notes with tags",
+  "description": "Simple CLI tool to quickly add, search, and organize your notes from anywhere in terminal",
   "main": "index.js",
   "bin": {
     "note": "./index.js"
@@ -15,10 +15,16 @@
     "prepare": "husky"
   },
   "keywords": [
-    "cli",
     "notes",
-    "tags",
-    "command-line"
+    "cli",
+    "productivity",
+    "terminal",
+    "todo",
+    "organize",
+    "quick-notes",
+    "command-line",
+    "note-taking",
+    "tags"
   ],
   "author": "Chloe Zhou",
   "license": "MIT",

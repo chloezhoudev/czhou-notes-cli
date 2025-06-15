@@ -58,6 +58,7 @@ export const removeNote = async (id) => {
 
 export const removeAllNotes = async () => {
   const session = await requireUserSession();
+
   const { error } = await removeAllNotesForUser(session.id);
 
   if (error) {
