@@ -14,7 +14,6 @@ const listNotes = (notes) => {
   })
 }
 
-// Username validation function
 const validateUsername = (username) => {
   const normalized = username.trim();
 
@@ -37,7 +36,6 @@ const validateUsername = (username) => {
   return normalized;
 };
 
-// Helper function to check if a session is still valid in the database
 const isSessionValid = async (session) => {
   try {
     const { data: user, error } = await findUserByUsername(session.username);
@@ -49,7 +47,6 @@ const isSessionValid = async (session) => {
   }
 };
 
-// Helper function to handle user login/creation with Supabase
 const handleUserSetup = async (username) => {
     // STEP 1: Validate and normalize username
     const normalizedUsername = validateUsername(username);
@@ -116,6 +113,7 @@ yargs(hideBin(process.argv))
           describe: 'Your username',
           type: 'string'
         })
+        .example('note setup john_doe', 'Create account or login as john_doe')
     }, async (argv) => {
       try {
         await handleUserSetup(argv.username);
@@ -175,32 +173,50 @@ yargs(hideBin(process.argv))
             describe: 'Tags to add to the note',
             default: []
         })
+        .example('note add "Buy groceries"', 'Add a simple note')
+        .example('note add "Team meeting" --tags work urgent', 'Add note with tags')
   }, async (argv) => {
-    const note = await addNote(argv.note, argv.tags);
-    console.info('Note added! ID:', note.id);
+    try {
+      const note = await addNote(argv.note, argv.tags);
+      console.info('Note added! ID:', note.id);
+    } catch (error) {
+      console.error(error.message);
+      process.exit(1);
+    }
   })
   .command(
     'all',
     'Get all notes',
     () => {},
     async (_argv) => {
-      const notes = await getAllNotes();
-      listNotes(notes);
+      try {
+        const notes = await getAllNotes();
+        listNotes(notes);
+      } catch (error) {
+        console.error(error.message);
+        process.exit(1);
+      }
     }
   )
   .command(
     'find <filter>',
-    'Get matching note',
+    'Search notes by content or tags',
     (yargs) => {
       return yargs
         .positional('filter', {
           describe: 'The search term to filter note by',
           type: 'string'
         })
+        .example('note find "meeting"', 'Find notes containing "meeting"')
     },
     async (argv) => {
-      const notes = await findNotes(argv.filter);
-      listNotes(notes);
+      try {
+        const notes = await findNotes(argv.filter);
+        listNotes(notes);
+      } catch (error) {
+        console.error(error.message);
+        process.exit(1);
+      }
     }
   )
   .command(
@@ -210,12 +226,18 @@ yargs(hideBin(process.argv))
       return yargs
         .positional('id', {
           describe: 'The id of the note you want to remove',
-          type: 'number'
+          type: 'string'
         })
+        .example('note remove <uuid>', 'Remove note by its ID (get ID from "note all")')
     },
     async (argv) => {
-      const id = await removeNote(argv.id);
-      console.log(id ? `Note removed: ${id}` : 'Note not found');
+      try {
+        const id = await removeNote(argv.id);
+        console.log(id ? `Note removed: ${id}` : 'Note not found');
+      } catch (error) {
+        console.error(error.message);
+        process.exit(1);
+      }
     }
   )
   .command(
@@ -223,8 +245,13 @@ yargs(hideBin(process.argv))
     'Remove all notes',
     () => {},
     async (_argv) => {
-      const done = await removeAllNotes();
-      console.log(done ? 'All notes removed' : 'Please try again later'); 
+      try {
+        const done = await removeAllNotes();
+        console.log(done ? 'All notes removed' : 'Please try again later');
+      } catch (error) {
+        console.error(error.message);
+        process.exit(1);
+      }
     }
   )
   .command(
@@ -239,8 +266,13 @@ yargs(hideBin(process.argv))
         })
     },
     async (argv) => {
-      const notes = await getAllNotes();
-      start(notes, argv.port);
+      try {
+        const notes = await getAllNotes();
+        start(notes, argv.port);
+      } catch (error) {
+        console.error(error.message);
+        process.exit(1);
+      }
     }
   )
   .demandCommand(1)
