@@ -6,8 +6,9 @@ import { saveUserSession, getUserSession, clearUserSession } from './users.js';
 import { createUser, findUserByUsername } from './supabase-db.js';
 
 const listNotes = (notes) => {
-  notes.forEach(note => {
+  notes.forEach((note, index) => {
     console.log('\n');
+    console.log(`\n[${index + 1}]`);
     console.log('note:', note.content);
     console.log('id:', note.id);
     console.log('tags:', note.tags.join(', '));
@@ -221,21 +222,28 @@ yargs(hideBin(process.argv))
   )
   .command(
     'remove <id>',
-    'Remove a note by id',
+    'Remove a note by index number or UUID',
     (yargs) => {
       return yargs
         .positional('id', {
-          describe: 'The id of the note you want to remove',
+          describe: 'The index number (from "note all") or UUID of the note to remove',
           type: 'string'
         })
-        .example('note remove <uuid>', 'Remove note by its ID (get ID from "note all")')
+        .example('note remove 2', 'Remove the 2nd note from your list')
+        .example('note remove f92e836e-a85b-491f-af2a-435b3308f6c1', 'Remove note by UUID')
     },
     async (argv) => {
       try {
         const id = await removeNote(argv.id);
-        console.log(id ? `Note removed: ${id}` : 'Note not found');
+
+        // Better success message
+        if (/^\d+$/.test(argv.id)) {
+          console.log(`✓ Note #${argv.id} removed successfully`);
+        } else {
+          console.log(`✓ Note removed: ${id}`);
+        }
       } catch (error) {
-        console.error(error.message);
+        console.error('❌', error.message);
         process.exit(1);
       }
     }

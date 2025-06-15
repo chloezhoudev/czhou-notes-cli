@@ -1,9 +1,5 @@
 import { supabase } from './supabase.js';
 
-// ============================================================================
-// USER OPERATIONS
-// ============================================================================
-
 export const createUser = async (username) => {
   const { data, error } = await supabase
     .from('users')
@@ -33,10 +29,6 @@ export const findUserByUsername = async (username) => {
 
   return { data, error };
 };
-
-// ============================================================================
-// NOTE OPERATIONS
-// ============================================================================
 
 export const createNote = async (userId, content, tags = []) => {
   const { data, error } = await supabase
