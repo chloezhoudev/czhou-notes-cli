@@ -24,15 +24,17 @@ note add "Meeting with team" --tags work urgent
 # View all notes
 note all
 
-# Search notes
+# Search notes by content or tags
 note find "meeting"
+note find "urgent"
 ```
 
 ## Features
 - **Multi-user support** - Each user has their own notes
 - **Create notes with tags** - Organize with multiple tags
-- **Search functionality** - Find notes by content
+- **Smart search functionality** - Find notes by content OR tags
 - **Tag-based organization** - Filter and categorize notes
+- **Flexible note removal** - Remove by index number or UUID
 - **Web interface** - View notes in browser
 - **Secure data storage** - Notes stored in Supabase database
 
@@ -46,8 +48,8 @@ note find "meeting"
 | `add <note>` | Create a new note | `note add "Buy groceries"` |
 | `add <note> --tags <tags>` | Create note with tags | `note add "Team meeting" --tags work urgent` |
 | `all` | List all your notes | `note all` |
-| `find <filter>` | Search notes by content | `note find "meeting"` |
-| `remove <id>` | Remove a note by ID | `note remove 123` |
+| `find <filter>` | Search notes by content or tags | `note find "meeting"` |
+| `remove <id>` | Remove note by index or UUID | `note remove 2` or `note remove f92e836e-...` |
 | `clean` | Remove all your notes | `note clean` |
 | `web [port]` | Start web interface | `note web 3000` |
 
