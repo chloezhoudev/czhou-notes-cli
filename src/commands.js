@@ -104,7 +104,16 @@ const handleUserSetup = async (username) => {
     return session;
 };
 
+// Simple error handler - just provide clear feedback
+const handleYargsError = (msg) => {
+  console.error(`Error: ${msg}`);
+  console.error(`Use "note --help" to see available commands and options`);
+  process.exit(1);
+};
+
 yargs(hideBin(process.argv))
+  .strict()
+  .fail(handleYargsError) // Custom error handler
   .command(
     'setup <username>',
     'Log in (or create user if needed) and persist the session',
