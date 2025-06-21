@@ -11,7 +11,7 @@ import {
 export const addNote = async (note, tags) => {
   const session = await requireUserSession();
 
-  const { data: savedNote, error } = await createNote(session.id, note, tags);
+  const { data: savedNote, error } = await createNote(session.id, note, tags, session.username);
 
   if (error) {
     throw new Error(`Failed to add note: ${error.message}`);
@@ -23,7 +23,7 @@ export const addNote = async (note, tags) => {
 export const getAllNotes = async () => {
   const session = await requireUserSession();
 
-  const { data: notes, error } = await getAllNotesForUser(session.id);
+  const { data: notes, error } = await getAllNotesForUser(session.id, session.username);
 
   if (error) {
     throw new Error(`Failed to get notes: ${error.message}`);
@@ -38,8 +38,8 @@ export const findNotes = async (filter) => {
 
   // Search both content and tags, then combine and deduplicate results
   const [contentResults, tagResults] = await Promise.all([
-    findNotesByContent(session.id, filter),
-    findNotesByTags(session.id, [filter])
+    findNotesByContent(session.id, filter, session.username),
+    findNotesByTags(session.id, [filter], session.username)
   ]);
 
   if (contentResults.error) {
@@ -65,7 +65,7 @@ export const findNotes = async (filter) => {
 export const removeAllNotes = async () => {
   const session = await requireUserSession();
 
-  const { error } = await removeAllNotesForUser(session.id);
+  const { error } = await removeAllNotesForUser(session.id, session.username);
 
   if (error) {
     throw new Error(`Failed to remove all notes: ${error.message}`);
@@ -89,7 +89,7 @@ export const removeNote = async (identifier) => {
     }
 
     // Get all notes to find the note at this index
-    const { data: notes, error: fetchError } = await getAllNotesForUser(session.id);
+    const { data: notes, error: fetchError } = await getAllNotesForUser(session.id, session.username);
 
     if (fetchError) {
       throw new Error(`Failed to fetch notes: ${fetchError.message}`);
@@ -108,7 +108,7 @@ export const removeNote = async (identifier) => {
   }
 
   // Now remove by UUID (works for both direct UUID and index-converted UUID)
-  const { data: removedNote, error } = await removeNoteById(noteId, session.id);
+  const { data: removedNote, error } = await removeNoteById(noteId, session.id, session.username);
 
   if (error) {
     throw new Error(`Failed to remove note: ${error.message}`);
