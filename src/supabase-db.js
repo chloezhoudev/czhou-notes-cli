@@ -19,16 +19,6 @@ export const createUser = async (username) => {
   return { data, error };
 };
 
-export const findUserById = async (id) => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  return { data, error };
-};
-
 export const findUserByUsername = async (username) => {
   const { data, error } = await supabase
     .from('users')
@@ -120,6 +110,16 @@ export const findNotesByTags = async (userId, tags, username) => {
 // ============================================================================
 // ADDITIONAL RECOMMENDED OPERATIONS
 // ============================================================================
+
+export const findUserById = async (id) => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  return { data, error };
+};
 
 export const findNoteById = async (noteId, userId, username) => {
   // Set user context for RLS
