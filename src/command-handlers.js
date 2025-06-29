@@ -160,11 +160,7 @@ export const handleMigrate = async () => {
 
     // Automatically archive legacy files
     console.log('\n📦 Archiving legacy note files...');
-    try {
-      await archiveLegacyFiles();
-    } catch (error) {
-      throw new Error(`Migration completed but failed to archive legacy files: ${error.message}`);
-    }
+    await archiveLegacyFiles();
   }
 
   return result;
