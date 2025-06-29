@@ -49,7 +49,40 @@ note find "meeting"
 | `find <filter>` | Search notes by content | `note find "meeting"` |
 | `remove <id>` | Remove a note by ID | `note remove 123` |
 | `clean` | Remove all your notes | `note clean` |
+| `migrate-check` | Preview legacy notes for migration | `note migrate-check` |
+| `migrate` | Migrate legacy notes to database | `note migrate` |
 | `web [port]` | Start web interface | `note web 3000` |
+
+## Migration
+
+If you previously used an older version that stored notes locally, you'll need to migrate to the new database system.
+
+**Check for legacy notes:**
+```bash
+note migrate-check
+```
+
+**Migrate your notes:**
+```bash
+note migrate
+```
+
+Legacy notes are local files from previous versions. Migration transfers them to your Supabase account after running `note setup`.
+
+**Example:**
+```bash
+$ note migrate-check
+📊 Found 1 legacy notes:
+✅ 1 notes would be migrated
+
+$ note migrate
+✅ Migration completed successfully! 1 notes migrated.
+```
+
+**Troubleshooting:**
+- Run `note setup` before migrating
+- Use `migrate-check` to preview what will be migrated
+- Legacy notes remain untouched during migration
 
 ## Development
 ```bash
