@@ -83,7 +83,7 @@ export const migrateLegacyNotes = async (userSession) => {
   } catch (error) {
     return {
       success: false,
-      message: `Migration aborted: Could not create backup - ${error.message}`,
+      message: `Migration aborted: ${error.message}`,
       migrated: 0,
       skipped: 0,
       errors: [{ type: 'system', error: error.message, stage: 'backup' }]
@@ -99,7 +99,7 @@ export const migrateLegacyNotes = async (userSession) => {
   } catch (error) {
     return {
       success: false,
-      message: `Migration failed: Could not read legacy notes - ${error.message}`,
+      message: `Migration failed: ${error.message}`,
       migrated: 0,
       skipped: 0,
       errors: [{ type: 'system', error: error.message, stage: 'reading' }]
