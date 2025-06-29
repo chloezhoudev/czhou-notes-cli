@@ -1,7 +1,8 @@
-import { saveUserSession, getUserSession, clearUserSession } from './users.js';
+import { saveUserSession, getUserSession, clearUserSession, requireUserSession } from './users.js';
 import { createUser, findUserByUsername } from './supabase-db.js';
 import { validateUsername, isSessionValid, listNotes, isNumericIndex } from './utils.js';
 import { addNote, getAllNotes, findNotes, removeNote, removeAllNotes } from './notes.js';
+import { hasLegacyNotes, migrateLegacyNotes, archiveLegacyFiles } from './migration.js';
 
 export const handleUserSetup = async (username) => {
   // STEP 1: Validate and normalize username
@@ -56,7 +57,21 @@ export const handleUserSetup = async (username) => {
 
   // Save new session
   const session = await saveUserSession(user);
+
+  // Check for migration after new login/signup
+  await checkAndOfferMigration();
+
   return session;
+};
+
+const checkAndOfferMigration = async () => {
+  const needsMigration = await hasLegacyNotes();
+
+  if (needsMigration) {
+    console.log('\n🔍 Legacy notes detected!');
+    console.log('💡 Run "note migrate" to import your old notes into the new system.');
+    console.log('💡 Or run "note migrate-check" to see what would be migrated.');
+  }
 };
 
 export const handleWhoami = async () => {
@@ -116,3 +131,42 @@ export const handleCleanNotes = async () => {
   console.log(done ? 'All notes removed' : 'Please try again later');
   return done;
 };
+
+export const handleMigrate = async () => {
+  const session = await requireUserSession();
+  console.log(`🚀 Starting migration for user: ${session.username}`);
+
+  const result = await migrateLegacyNotes(session);
+
+  // Report results based on success/failure
+  console.log('\n📊 Migration Results:');
+
+  if (result.success) {
+    console.log(`✅ ${result.message}`);
+
+    if (result.migrated > 0) {
+      console.log(`📝 ${result.migrated} notes migrated successfully`);
+    }
+
+    if (result.skipped > 0) {
+      console.log(`⚠️  ${result.skipped} empty notes were skipped`);
+    }
+  } else {
+    console.log(`❌ ${result.message}`);
+  }
+
+  if (result.success && result.migrated > 0) {
+    console.log('💡 Run "note all" to see all your notes.');
+
+    // Automatically archive legacy files
+    console.log('\n📦 Archiving legacy note files...');
+    try {
+      await archiveLegacyFiles();
+    } catch (error) {
+      throw new Error(`Migration completed but failed to archive legacy files: ${error.message}`);
+    }
+  }
+
+  return result;
+};
+

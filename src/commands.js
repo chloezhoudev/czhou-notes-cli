@@ -9,9 +9,11 @@ import {
   handleGetAllNotes,
   handleFindNotes,
   handleRemoveNote,
-  handleCleanNotes
+  handleCleanNotes,
+  handleMigrate,
 } from './command-handlers.js';
 import { getAllNotes } from './notes.js';
+import { checkMigrationPreview } from './migration.js';
 
 const handleYargsError = (msg) => {
   console.error(`Error: ${msg}`);
@@ -61,6 +63,32 @@ yargs(hideBin(process.argv))
         await handleLogout();
       } catch (error) {
         console.error('Logout failed:', error.message);
+      }
+    }
+  )
+  .command(
+    'migrate',
+    'Migrate legacy notes to the new system',
+    () => {},
+    async (_argv) => {
+      try {
+        await handleMigrate();
+      } catch (error) {
+        console.error('Migration failed:', error.message);
+        process.exit(1);
+      }
+    }
+  )
+  .command(
+    'migrate-check',
+    'Check if migration is needed and preview what would be migrated',
+    () => {},
+    async (_argv) => {
+      try {
+        await checkMigrationPreview();
+      } catch (error) {
+        console.error('Migration check failed:', error.message);
+        process.exit(1);
       }
     }
   )
