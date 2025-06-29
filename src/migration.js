@@ -83,7 +83,7 @@ export const migrateLegacyNotes = async (userSession) => {
   } catch (error) {
     return {
       success: false,
-      message: `Migration aborted: Could not create backup - ${error.message}`,
+      message: `Migration aborted: ${error.message}`,
       migrated: 0,
       skipped: 0,
       errors: [{ type: 'system', error: error.message, stage: 'backup' }]
@@ -99,7 +99,7 @@ export const migrateLegacyNotes = async (userSession) => {
   } catch (error) {
     return {
       success: false,
-      message: `Migration failed: Could not read legacy notes - ${error.message}`,
+      message: `Migration failed: ${error.message}`,
       migrated: 0,
       skipped: 0,
       errors: [{ type: 'system', error: error.message, stage: 'reading' }]
@@ -175,15 +175,19 @@ export const migrateLegacyNotes = async (userSession) => {
 }
 
 export const archiveLegacyFiles = async () => {
-  const archiveDir = join(homeDir, '.note-cli', 'archive');
-  await mkdir(archiveDir, { recursive: true });
+  try {
+    const archiveDir = join(homeDir, '.note-cli', 'archive');
+    await mkdir(archiveDir, { recursive: true });
 
-  // Move original file to archive
-  const archivePath = join(archiveDir, `db-${Date.now()}.json`);
-  await copyFile(LEGACY_NOTES_PATH, archivePath);
-  await unlink(LEGACY_NOTES_PATH); // Remove original
+    // Move original file to archive
+    const archivePath = join(archiveDir, `db-${Date.now()}.json`);
+    await copyFile(LEGACY_NOTES_PATH, archivePath);
+    await unlink(LEGACY_NOTES_PATH); // Remove original
 
-  console.log(`📦 Legacy files archived to: ${archivePath}`);
+    console.log(`📦 Legacy files archived to: ${archivePath}`);
+  } catch (error) {
+    throw new Error(`Failed to archive legacy files: ${error.message}`);
+  }
 };
 
 export const checkMigrationPreview = async () => {

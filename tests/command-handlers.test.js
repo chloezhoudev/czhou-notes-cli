@@ -28,6 +28,18 @@ jest.unstable_mockModule('../src/utils.js', () => ({
   isNumericIndex: jest.fn()
 }));
 
+jest.unstable_mockModule('../src/migration.js', () => ({
+  hasLegacyNotes: jest.fn(),
+  migrateLegacyNotes: jest.fn(),
+  archiveLegacyFiles: jest.fn()
+}));
+
+const supabaseDb = await import('../src/supabase-db.js');
+const notes = await import('../src/notes.js');
+const users = await import('../src/users.js');
+const utils = await import('../src/utils.js');
+const migration = await import('../src/migration.js');
+
 const {
   handleUserSetup,
   handleWhoami,
@@ -36,13 +48,9 @@ const {
   handleGetAllNotes,
   handleFindNotes,
   handleRemoveNote,
-  handleCleanNotes
+  handleCleanNotes,
+  handleMigrate
 } = await import('../src/command-handlers.js');
-
-const supabaseDb = await import('../src/supabase-db.js');
-const notes = await import('../src/notes.js');
-const users = await import('../src/users.js');
-const utils = await import('../src/utils.js');
 
 // Mock console methods
 const consoleSpy = {
@@ -161,6 +169,65 @@ describe('Command Handlers', () => {
       });
 
       await expect(handleUserSetup('testuser')).rejects.toThrow('Failed to create user: Creation failed');
+    });
+
+    test('should offer migration when legacy notes are detected after user setup', async () => {
+      users.getUserSession.mockResolvedValue(null);
+      supabaseDb.findUserByUsername.mockResolvedValue({ data: mockUser, error: null });
+      users.saveUserSession.mockResolvedValue(mockSession);
+      migration.hasLegacyNotes.mockResolvedValue(true);
+
+      await handleUserSetup('testuser');
+
+      expect(migration.hasLegacyNotes).toHaveBeenCalled();
+      expect(consoleSpy.log).toHaveBeenCalledWith('\n🔍 Legacy notes detected!');
+      expect(consoleSpy.log).toHaveBeenCalledWith('💡 Run "note migrate" to import your old notes into the new system.');
+      expect(consoleSpy.log).toHaveBeenCalledWith('💡 Or run "note migrate-check" to see what would be migrated.');
+    });
+
+    test('should not offer migration when no legacy notes found', async () => {
+      users.getUserSession.mockResolvedValue(null);
+      supabaseDb.findUserByUsername.mockResolvedValue({ data: mockUser, error: null });
+      users.saveUserSession.mockResolvedValue(mockSession);
+      migration.hasLegacyNotes.mockResolvedValue(false);
+
+      await handleUserSetup('testuser');
+
+      expect(migration.hasLegacyNotes).toHaveBeenCalled();
+      expect(consoleSpy.log).not.toHaveBeenCalledWith(expect.stringContaining('Legacy notes detected'));
+      expect(consoleSpy.log).not.toHaveBeenCalledWith(expect.stringContaining('note migrate'));
+    });
+
+    test('should propagate migration check errors during user setup', async () => {
+      users.getUserSession.mockResolvedValue(null);
+      supabaseDb.findUserByUsername.mockResolvedValue({ data: mockUser, error: null });
+      users.saveUserSession.mockResolvedValue(mockSession);
+      migration.hasLegacyNotes.mockRejectedValue(new Error('File system error'));
+
+      await expect(handleUserSetup('testuser')).rejects.toThrow('File system error');
+
+      expect(migration.hasLegacyNotes).toHaveBeenCalled();
+    });
+
+    test('should offer migration for new user creation with legacy notes', async () => {
+      const newUserMock = { id: 'user-456', username: 'newuser' };
+      const newSessionMock = { id: 'user-456', username: 'newuser', loginTime: '2025-01-01T00:00:00.000Z' };
+
+      utils.validateUsername.mockReturnValue('newuser');
+      users.getUserSession.mockResolvedValue(null);
+      supabaseDb.findUserByUsername.mockResolvedValue({
+        data: null,
+        error: { code: 'PGRST116', message: 'Not found' }
+      });
+      supabaseDb.createUser.mockResolvedValue({ data: newUserMock, error: null });
+      users.saveUserSession.mockResolvedValue(newSessionMock);
+      migration.hasLegacyNotes.mockResolvedValue(true);
+
+      await handleUserSetup('newuser');
+
+      expect(migration.hasLegacyNotes).toHaveBeenCalled();
+      expect(consoleSpy.log).toHaveBeenCalledWith('✓ Account created for newuser!');
+      expect(consoleSpy.log).toHaveBeenCalledWith('\n🔍 Legacy notes detected!');
     });
   });
 
@@ -351,6 +418,159 @@ describe('Command Handlers', () => {
       notes.removeAllNotes.mockRejectedValue(new Error('Failed to clean notes'));
 
       await expect(handleCleanNotes()).rejects.toThrow('Failed to clean notes');
+    });
+  });
+
+  describe('handleMigrate', () => {
+    const mockSession = { id: 'user-123', username: 'testuser' };
+
+    beforeEach(() => {
+      users.requireUserSession.mockResolvedValue(mockSession);
+    });
+
+    test('should migrate notes successfully with results', async () => {
+      const mockResult = {
+        success: true,
+        message: 'Migration completed successfully',
+        migrated: 5,
+        skipped: 2
+      };
+      migration.migrateLegacyNotes.mockResolvedValue(mockResult);
+      migration.archiveLegacyFiles.mockResolvedValue();
+
+      const result = await handleMigrate();
+
+      expect(users.requireUserSession).toHaveBeenCalled();
+      expect(migration.migrateLegacyNotes).toHaveBeenCalledWith(mockSession);
+      expect(migration.archiveLegacyFiles).toHaveBeenCalled();
+
+      expect(consoleSpy.log).toHaveBeenCalledWith('🚀 Starting migration for user: testuser');
+      expect(consoleSpy.log).toHaveBeenCalledWith('\n📊 Migration Results:');
+      expect(consoleSpy.log).toHaveBeenCalledWith('✅ Migration completed successfully');
+      expect(consoleSpy.log).toHaveBeenCalledWith('📝 5 notes migrated successfully');
+      expect(consoleSpy.log).toHaveBeenCalledWith('⚠️  2 empty notes were skipped');
+      expect(consoleSpy.log).toHaveBeenCalledWith('💡 Run "note all" to see all your notes.');
+      expect(consoleSpy.log).toHaveBeenCalledWith('\n📦 Archiving legacy note files...');
+
+      expect(result).toEqual(mockResult);
+    });
+
+    test('should handle migration with only migrated notes (no skipped)', async () => {
+      const mockResult = {
+        success: true,
+        message: 'Migration completed successfully',
+        migrated: 3,
+        skipped: 0
+      };
+      migration.migrateLegacyNotes.mockResolvedValue(mockResult);
+      migration.archiveLegacyFiles.mockResolvedValue();
+
+      const result = await handleMigrate();
+
+      expect(consoleSpy.log).toHaveBeenCalledWith('✅ Migration completed successfully');
+      expect(consoleSpy.log).toHaveBeenCalledWith('📝 3 notes migrated successfully');
+      expect(consoleSpy.log).not.toHaveBeenCalledWith(expect.stringContaining('empty notes were skipped'));
+      expect(consoleSpy.log).toHaveBeenCalledWith('💡 Run "note all" to see all your notes.');
+      expect(migration.archiveLegacyFiles).toHaveBeenCalled();
+
+      expect(result).toEqual(mockResult);
+    });
+
+    test('should handle migration with only skipped notes (no migrated)', async () => {
+      const mockResult = {
+        success: true,
+        message: 'Migration completed successfully',
+        migrated: 0,
+        skipped: 3
+      };
+      migration.migrateLegacyNotes.mockResolvedValue(mockResult);
+
+      const result = await handleMigrate();
+
+      expect(consoleSpy.log).toHaveBeenCalledWith('✅ Migration completed successfully');
+      expect(consoleSpy.log).not.toHaveBeenCalledWith(expect.stringContaining('notes migrated successfully'));
+      expect(consoleSpy.log).toHaveBeenCalledWith('⚠️  3 empty notes were skipped');
+      expect(consoleSpy.log).not.toHaveBeenCalledWith('💡 Run "note all" to see all your notes.');
+      expect(migration.archiveLegacyFiles).not.toHaveBeenCalled();
+
+      expect(result).toEqual(mockResult);
+    });
+
+    test('should handle successful migration with no notes processed', async () => {
+      const mockResult = {
+        success: true,
+        message: 'No legacy notes found to migrate',
+        migrated: 0,
+        skipped: 0
+      };
+      migration.migrateLegacyNotes.mockResolvedValue(mockResult);
+
+      const result = await handleMigrate();
+
+      expect(consoleSpy.log).toHaveBeenCalledWith('✅ No legacy notes found to migrate');
+      expect(consoleSpy.log).not.toHaveBeenCalledWith(expect.stringContaining('notes migrated successfully'));
+      expect(consoleSpy.log).not.toHaveBeenCalledWith(expect.stringContaining('empty notes were skipped'));
+      expect(consoleSpy.log).not.toHaveBeenCalledWith('💡 Run "note all" to see all your notes.');
+      expect(migration.archiveLegacyFiles).not.toHaveBeenCalled();
+
+      expect(result).toEqual(mockResult);
+    });
+
+    test('should handle migration failure', async () => {
+      const mockResult = {
+        success: false,
+        message: 'Migration failed: Database connection error',
+        migrated: 0,
+        skipped: 0
+      };
+      migration.migrateLegacyNotes.mockResolvedValue(mockResult);
+
+      const result = await handleMigrate();
+
+      expect(consoleSpy.log).toHaveBeenCalledWith('🚀 Starting migration for user: testuser');
+      expect(consoleSpy.log).toHaveBeenCalledWith('\n📊 Migration Results:');
+      expect(consoleSpy.log).toHaveBeenCalledWith('❌ Migration failed: Database connection error');
+      expect(consoleSpy.log).not.toHaveBeenCalledWith(expect.stringContaining('notes migrated successfully'));
+      expect(consoleSpy.log).not.toHaveBeenCalledWith('💡 Run "note all" to see all your notes.');
+      expect(migration.archiveLegacyFiles).not.toHaveBeenCalled();
+
+      expect(result).toEqual(mockResult);
+    });
+
+    test('should propagate requireUserSession errors', async () => {
+      users.requireUserSession.mockRejectedValue(new Error('No user session'));
+
+      await expect(handleMigrate()).rejects.toThrow('No user session');
+
+      expect(migration.migrateLegacyNotes).not.toHaveBeenCalled();
+      expect(migration.archiveLegacyFiles).not.toHaveBeenCalled();
+    });
+
+    test('should propagate migrateLegacyNotes errors', async () => {
+      migration.migrateLegacyNotes.mockRejectedValue(new Error('Migration process failed'));
+
+      await expect(handleMigrate()).rejects.toThrow('Migration process failed');
+
+      expect(users.requireUserSession).toHaveBeenCalled();
+      expect(migration.archiveLegacyFiles).not.toHaveBeenCalled();
+    });
+
+    test('should handle archiveLegacyFiles errors gracefully', async () => {
+      const mockResult = {
+        success: true,
+        message: 'Migration completed successfully',
+        migrated: 3,
+        skipped: 0
+      };
+      migration.migrateLegacyNotes.mockResolvedValue(mockResult);
+      migration.archiveLegacyFiles.mockRejectedValue(new Error('Archive failed'));
+
+      // Should not throw, but should still complete migration
+      await expect(handleMigrate()).rejects.toThrow('Archive failed');
+
+      expect(migration.migrateLegacyNotes).toHaveBeenCalled();
+      expect(consoleSpy.log).toHaveBeenCalledWith('✅ Migration completed successfully');
+      expect(consoleSpy.log).toHaveBeenCalledWith('\n📦 Archiving legacy note files...');
     });
   });
 });
