@@ -1,9 +1,12 @@
-# Note CLI
+# Note CLI ✨
 
 [![CI](https://github.com/chloezhoudev/czhou-notes-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/chloezhoudev/czhou-notes-cli/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/chloezhoudev/czhou-notes-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/chloezhoudev/czhou-notes-cli)
 
-Simple CLI tool to quickly add, search, and organize your notes from anywhere in terminal.
+**Capture & search notes instantly from your terminal**
+Take notes without breaking flow — built for terminal users who think fast and move faster.
+
+![Demo](./assets/demo.gif)
 
 ## Install & Start
 ```
@@ -84,6 +87,10 @@ note migrate
 - **"No user session found"** → Run `note setup <username>` first
 - **Want to preview?** → Use `note migrate-check` to see what will move
 - **Worried about data loss?** → Don't be! Your original notes are automatically backed up
+
+## 🌟 Love this tool?
+- **Star the repo** → [GitHub](https://github.com/chloezhoudev/czhou-notes-cli)
+- **Share a tip**: `note add "Pro tip: Use --tags for context!"`
 
 ## License
 MIT
